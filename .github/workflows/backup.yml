@@ -1,0 +1,47 @@
+# Backup automatico notturno del database Supabase.
+# Il dump è cifrato (GPG AES256) prima di lasciare il runner: contiene dati dei clienti.
+# Secrets richiesti (GitHub > Settings > Secrets and variables > Actions):
+#   SUPABASE_DB_URL     stringa "Session pooler" di Supabase (Project Settings > Database > Connect)
+#   BACKUP_PASSPHRASE   frase lunga per cifrare; conservala anche fuori da GitHub
+name: Backup database
+
+on:
+  schedule:
+    - cron: "17 2 * * *"   # ogni notte alle 02:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Installa pg_dump 17
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+      - name: Dump dati (schema public + utenti auth + metadati foto)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          FILE="lupi-gomme-$(date -u +%Y%m%d-%H%M).sql"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --no-owner --no-privileges \
+            --schema=public --schema=auth --schema=storage --file="$FILE"
+          test -s "$FILE"
+          gzip -9 "$FILE"
+          echo "FILE=$FILE.gz" >> "$GITHUB_ENV"
+      - name: Cifra
+        env:
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 "$FILE"
+          shred -u "$FILE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_id }}
+          path: "*.gpg"
+          retention-days: 30

@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #f5b800;
+  --color-brand-dark: #c99700;
+  --color-ink: #111418;
+  --color-ok: #15803d;
+  --color-ko: #b91c1c;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: #f3f4f6;
+  color: var(--color-ink);
+  font-size: 18px;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input, select, textarea, button { font-size: 18px; }
+/* iOS non zooma se il font dei campi è >= 16px */
+input, select, textarea { font-size: max(18px, 1em); }
+
+@utility btn {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 font-bold select-none active:scale-[.97] transition disabled:opacity-40;
+}
+@utility btn-primary { @apply btn bg-ink text-white; }
+@utility btn-brand { @apply btn bg-brand text-ink; }
+@utility btn-ghost { @apply btn bg-white text-ink border-2 border-gray-300; }
+@utility btn-danger { @apply btn bg-ko text-white; }
+@utility campo {
+  @apply block w-full min-h-12 rounded-xl border-2 border-gray-300 bg-white px-3 py-2 outline-none focus:border-ink;
+}
+@utility etichetta { @apply mb-1 block text-sm font-bold uppercase tracking-wide text-gray-600; }
+@utility card { @apply rounded-2xl bg-white p-4 shadow-sm; }
+@utility pb-nav { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
