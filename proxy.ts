@@ -1,12 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/config";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Rinnova la sessione a ogni richiesta (cookie da 400 giorni) e blocca chi non ha fatto l'accesso.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const sb = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
