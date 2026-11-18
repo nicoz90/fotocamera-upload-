@@ -10,9 +10,7 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · Supabase (Postgres
 1. Crea il progetto su supabase.com, **regione UE** (es. `eu-central-1` Francoforte).
 2. **SQL Editor** → incolla ed esegui tutto `supabase/migrations/0001_schema.sql`.
 3. **Authentication → Sign In / Providers**: disattiva **"Allow new users to sign up"**. Nessuno si registra da solo.
-4. **Authentication → Users → Add user**: crea il tuo account (spunta *Auto Confirm User*).
-5. SQL Editor: esegui `scripts/crea-titolare.sql` con la tua email → diventi titolare.
-6. **Project Settings → API**: copia URL, `anon` key e `service_role` key.
+4. **Project Settings → API**: copia URL, `anon` key e `service_role` key.
 
 ### 2. Vercel
 1. Importa il repository su vercel.com.
@@ -23,14 +21,19 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · Supabase (Postgres
 3. Settings → Functions → regione `fra1` (vicina al database).
 4. Deploy. In Supabase → Authentication → URL Configuration metti l'URL Vercel come *Site URL*.
 
-### 3. Telefoni
+### 3. Primo avvio: account del titolare
+Apri l'app: nella pagina di login compare **"Primo avvio: crea il titolare"**. Il titolare inserisce nome, email e password.
+Funziona una sola volta: appena esiste un titolare la pagina si chiude. I dipendenti li crea poi lui da *Altro → Account dipendenti*.
+(In alternativa: crea l'utente da Supabase e lancia `scripts/crea-titolare.sql`.)
+
+### 4. Telefoni
 Apri l'URL e accedi. Poi:
 - **iPhone (Safari)**: Condividi → *Aggiungi alla schermata Home*.
 - **Android (Chrome)**: menu ⋮ → *Installa app*.
 
 L'accesso resta attivo: non si rifà ogni giorno (sessione rinnovata in automatico).
 
-### 4. Backup automatico
+### 5. Backup automatico
 `.github/workflows/backup.yml` fa ogni notte un dump del database, **cifrato** (contiene dati clienti), conservato 30 giorni negli artifact di GitHub.
 Aggiungi in GitHub → Settings → Secrets → Actions:
 - `SUPABASE_DB_URL`: Supabase → Connect → *Session pooler* (con password)

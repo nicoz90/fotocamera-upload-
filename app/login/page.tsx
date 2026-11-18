@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { erroreIt, supabase } from "@/lib/supabase/client";
 import { Messaggio } from "@/components/ui";
 
@@ -8,6 +8,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errore, setErrore] = useState("");
   const [attesa, setAttesa] = useState(false);
+  const [primoAvvio, setPrimoAvvio] = useState(false);
+  useEffect(() => {
+    fetch("/api/primo-avvio").then((r) => r.json()).then((j) => setPrimoAvvio(!!j.disponibile)).catch(() => {});
+  }, []);
   const disattivato = typeof window !== "undefined" && new URLSearchParams(location.search).has("disattivato");
 
   async function entra(e: React.FormEvent) {
@@ -30,6 +34,9 @@ export default function Login() {
           <p className="text-3xl font-black tracking-tight">LUPI <span className="rounded bg-brand px-1">GOMME</span></p>
           <p className="mt-1 text-gray-600">Magazzino – accesso riservato</p>
         </div>
+        {primoAvvio && (
+          <a href="/primo-avvio" className="btn-primary w-full">Primo avvio: crea il titolare</a>
+        )}
         {disattivato && <Messaggio>Account disattivato. Chiedi al titolare.</Messaggio>}
         {errore && <Messaggio>{errore}</Messaggio>}
         <label className="block">

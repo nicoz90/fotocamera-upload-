@@ -21,7 +21,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await sb.auth.getUser();
   const path = request.nextUrl.pathname;
-  const pubblica = path === "/login";
+  const pubblica = path === "/login" || path === "/primo-avvio" || path === "/api/primo-avvio";
 
   if (!user && !pubblica) {
     if (path.startsWith("/api/")) return NextResponse.json({ errore: "Non autenticato" }, { status: 401 });
@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
-  if (user && pubblica) {
+  if (user && path === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
