@@ -27,6 +27,7 @@ export async function GET() {
         : /relation|does not exist|schema/i.test(msg)
           ? "Il database non ha lo schema: esegui 0001_schema.sql."
           : "Database non raggiungibile.",
+      dettaglio: (msg || String(e)).slice(0, 200),
     });
   }
 }
