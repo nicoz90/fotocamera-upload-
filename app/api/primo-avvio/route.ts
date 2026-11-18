@@ -12,10 +12,22 @@ async function esisteTitolare(): Promise<boolean> {
 }
 
 export async function GET() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ disponibile: false, motivo: "Manca SUPABASE_SERVICE_ROLE_KEY nelle variabili del server." });
+  }
   try {
-    return NextResponse.json({ disponibile: !(await esisteTitolare()) });
-  } catch {
-    return NextResponse.json({ disponibile: false });
+    const esiste = await esisteTitolare();
+    return NextResponse.json({ disponibile: !esiste, motivo: esiste ? "Il titolare esiste già." : null });
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "";
+    return NextResponse.json({
+      disponibile: false,
+      motivo: /invalid|jwt|api key|unauthorized/i.test(msg)
+        ? "La chiave SUPABASE_SERVICE_ROLE_KEY non è valida."
+        : /relation|does not exist|schema/i.test(msg)
+          ? "Il database non ha lo schema: esegui 0001_schema.sql."
+          : "Database non raggiungibile.",
+    });
   }
 }
 
