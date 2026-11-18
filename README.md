@@ -2,7 +2,7 @@
 
 PWA privata per il magazzino gomme dell'officina. Risponde in pochi secondi a: **la misura c'è? quante? dove?**
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · Supabase (Postgres, Auth, RLS, Storage) · Vercel.
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · Supabase (Postgres, Auth, RLS, Storage) · Netlify.
 
 ## Messa in produzione (una volta sola, ~20 minuti)
 
@@ -12,14 +12,14 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind 4 · Supabase (Postgres
 3. **Authentication → Sign In / Providers**: disattiva **"Allow new users to sign up"**. Nessuno si registra da solo.
 4. **Project Settings → API**: copia URL, `anon` key e `service_role` key.
 
-### 2. Vercel
-1. Importa il repository su vercel.com.
-2. Environment Variables (vedi `.env.example`):
+### 2. Netlify (piano gratuito, uso commerciale ammesso)
+1. app.netlify.com → **Add new project → Import an existing project → GitHub** → `fotocamera-upload-`, branch `main`.
+2. Build command e cartella li legge da `netlify.toml`: non toccarli.
+3. **Environment variables** (vedi `.env.example`):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` ← **mai** con prefisso `NEXT_PUBLIC_`
-3. Settings → Functions → regione `fra1` (vicina al database).
-4. Deploy. In Supabase → Authentication → URL Configuration metti l'URL Vercel come *Site URL*.
+   - `SUPABASE_SERVICE_ROLE_KEY` ← segnala come *secret*, **mai** con prefisso `NEXT_PUBLIC_`
+4. Deploy. In Supabase → Authentication → URL Configuration metti l'URL Netlify come *Site URL*.
 
 ### 3. Primo avvio: account del titolare
 Apri l'app: nella pagina di login compare **"Primo avvio: crea il titolare"**. Il titolare inserisce nome, email e password.
