@@ -5,10 +5,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 // poi risponde sempre 403. Dopo, gli account si creano solo dall'app (Altro → Account dipendenti).
 
 async function esisteTitolare(): Promise<boolean> {
-  const { count, error } = await supabaseAdmin()
-    .from("profiles").select("id", { count: "exact", head: true }).eq("ruolo", "admin");
+  const { data, error } = await supabaseAdmin()
+    .from("profiles").select("id").eq("ruolo", "admin").limit(1);
   if (error) throw error;
-  return (count ?? 0) > 0;
+  return (data?.length ?? 0) > 0;
 }
 
 export async function GET() {
@@ -27,7 +27,7 @@ export async function GET() {
         : /relation|does not exist|schema/i.test(msg)
           ? "Il database non ha lo schema: esegui 0001_schema.sql."
           : "Database non raggiungibile.",
-      dettaglio: (msg || String(e)).slice(0, 200),
+      dettaglio: [msg, (e as { code?: string })?.code, (e as { hint?: string })?.hint].filter(Boolean).join(" | ").slice(0, 300) || JSON.stringify(e).slice(0, 300),
     });
   }
 }
