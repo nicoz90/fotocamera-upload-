@@ -20,10 +20,10 @@ html,body{margin:0;background:var(--bg);overflow:hidden}
 .lab .big{font-size:132px;font-weight:900;font-stretch:72%;line-height:.92;text-transform:uppercase}
 .lab .big.num{font-stretch:125%;font-size:112px}
 .lab .sub{font-size:38px;font-weight:500;font-stretch:100%;margin-top:18px;opacity:.85}
-#end{top:300px}
-#end .q{font-size:116px;font-weight:900;font-stretch:72%;line-height:.92;text-transform:uppercase}
-#end .a{margin-top:30px;font-size:58px;white-space:nowrap;font-weight:900;font-stretch:125%;color:var(--fluo);text-transform:uppercase;line-height:1}
-#end .s{margin-top:28px;font-size:36px;font-weight:600;opacity:.85}
+#end{top:236px}
+#end .q{font-size:104px;font-weight:900;font-stretch:72%;line-height:.92;text-transform:uppercase}
+#end .a{margin-top:22px;font-size:58px;white-space:nowrap;font-weight:900;font-stretch:125%;color:var(--fluo);text-transform:uppercase;line-height:1}
+#end .s{margin-top:18px;font-size:36px;font-weight:600;opacity:.85}
 #logo{position:absolute;left:0;right:0;top:1430px;text-align:center;font-family:Archivo;font-weight:900;font-stretch:125%;font-size:46px;letter-spacing:.32em;color:var(--ink)}
 #logo span{color:var(--fluo)}
 #ul{position:relative;height:10px;background:var(--fluo);margin-top:14px}
@@ -228,8 +228,8 @@ const keys=[
  [9.4, t=>worldOf('sensor',t), 32, 58, 14, .085],
  [10.7,t=>worldOf('sensor',t), 36, 66, 16, .085],
  [11.6,C_ALL, 140, 58, 10, -.02],
- [12.4,C_ASM, 76, -30, 8, -.035],
- [15.0,C_ASM, 72, -26, 6, -.035],
+ [12.25,C_ASM, HA[0]-2, HA[1]+2, HA[2], HA[3]],
+ [15.0,C_ASM, HA[0], HA[1], HA[2], HA[3]],
 ];
 function camAt(t){
   let i=0;while(i<keys.length-2&&t>keys[i+1][0])i++;
@@ -293,8 +293,8 @@ function render(t){
   renderer.render(scene,cam);
 
   // opening photo (Gemini) -> flash -> 3D
-  const ph=$('photo');const pv=q.has('nophoto')?0:(1-cl((t-0.5)/0.06));ph.style.opacity=pv;ph.style.transform=`scale(${1+0.05*eo(t/0.55)})`;
-  const fl=Math.max(0,1-Math.abs(t-0.53)/0.12)*0.85;$('flash').style.opacity=fl;
+  const ph=$('photo');const pv=q.has('nophoto')?0:Math.max(1-cl((t-0.5)/0.06),cl((t-12.22)/0.06));ph.style.opacity=pv;ph.style.transform=`scale(${t<6?1+0.05*eo(t/0.55):1.05-0.05*sm((t-12.25)/2.75)})`;
+  const fl=Math.max(0,1-Math.abs(t-0.53)/0.12,1-Math.abs(t-12.25)/0.12)*0.85;$('flash').style.opacity=fl;
   // UI
   focusWords($('hook'),0.02,t,.07,.28,2.05);
   const chipIn=cl((t-2.15)/.25),chipOut=cl((t-12.3)/.2);$('chip').style.opacity=chipIn*(1-chipOut);$('chip').style.transform=`translateY(${(1-eo(chipIn))*-20}px)`;
