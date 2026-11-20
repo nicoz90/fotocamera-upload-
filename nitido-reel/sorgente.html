@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<title>Dentro la mirrorless</title>
+<style>
+@font-face{font-family:Archivo;src:url(Archivo.ttf);font-weight:100 900;font-stretch:62% 125%}
+:root{--bg:#050605;--ink:#F4F4EE;--fluo:#CCFF00}
+html,body{margin:0;background:var(--bg);overflow:hidden}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(120% 80% at 50% 45%,#1b1f1a 0%,#0b0d0b 55%,#040504 100%)}
+#gl{position:absolute;inset:0;width:1080px;height:1920px}
+#ui,#fx{position:absolute;inset:0;pointer-events:none}
+.t{font-family:Archivo;color:var(--ink);position:absolute;left:84px;right:180px}
+.w{display:inline-block;margin-right:.22em;will-change:filter,transform,opacity}
+.fl{color:var(--fluo)}
+#hook{top:250px;right:84px;font-size:122px;font-weight:900;font-stretch:72%;line-height:.94;letter-spacing:-.01em;text-transform:uppercase}
+#chip{top:236px;font-size:30px;font-weight:800;font-stretch:100%;letter-spacing:.08em;text-transform:uppercase;display:flex;gap:16px;align-items:center}
+#chip .b{background:var(--fluo);color:#050605;padding:10px 16px 8px}
+#chip .n{border:2px solid var(--ink);padding:8px 14px 6px}
+.lab{top:1170px}
+.lab .tag{font-size:26px;font-weight:800;letter-spacing:.16em;color:var(--fluo);font-stretch:100%;margin-bottom:14px}
+.lab .big{font-size:132px;font-weight:900;font-stretch:72%;line-height:.92;text-transform:uppercase}
+.lab .big.num{font-stretch:125%;font-size:112px}
+.lab .sub{font-size:38px;font-weight:500;font-stretch:100%;margin-top:18px;opacity:.85}
+#end{top:300px}
+#end .q{font-size:116px;font-weight:900;font-stretch:72%;line-height:.92;text-transform:uppercase}
+#end .a{margin-top:30px;font-size:58px;white-space:nowrap;font-weight:900;font-stretch:125%;color:var(--fluo);text-transform:uppercase;line-height:1}
+#end .s{margin-top:28px;font-size:36px;font-weight:600;opacity:.85}
+#logo{position:absolute;left:0;right:0;top:1430px;text-align:center;font-family:Archivo;font-weight:900;font-stretch:125%;font-size:46px;letter-spacing:.32em;color:var(--ink)}
+#logo span{color:var(--fluo)}
+#ul{position:relative;height:10px;background:var(--fluo);margin-top:14px}
+svg{position:absolute;inset:0}
+.vf{position:absolute;font-family:Archivo;font-weight:700;font-size:24px;letter-spacing:.12em;color:rgba(244,244,238,.7);font-stretch:100%}
+#zones{position:absolute;inset:0;display:none}
+#zones div{position:absolute;background:rgba(255,0,0,.25)}
+</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<div id="stage">
+  <canvas id="gl" width="1080" height="1920"></canvas>
+  <div id="ui">
+    <svg id="lines" width="1080" height="1920"></svg>
+    <div class="t" id="hook"></div>
+    <div class="t" id="chip"><span class="b">Quanti pezzi conti?</span><span class="n">Scrivi il numero</span></div>
+    <div class="t lab" id="L0"></div><div class="t lab" id="L1"></div><div class="t lab" id="L2"></div><div class="t lab" id="L3"></div><div class="t lab" id="L4"></div>
+    <div class="t" id="end"><div class="q"></div><div class="a"></div><div id="ul"></div><div class="s"></div></div>
+    <div id="logo">NITID<span>O</span></div>
+    <div class="vf" id="tc" style="left:84px;top:1560px"></div>
+    <div class="vf" id="ex" style="left:84px;top:1600px"></div>
+  </div>
+  <canvas id="fx" width="1080" height="1920"></canvas>
+  <div id="zones"><div style="left:0;right:0;top:0;height:204px"></div><div style="left:0;right:0;bottom:0;height:408px"></div><div style="right:0;top:900px;bottom:408px;width:150px"></div></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const W=1080,H=1920,FLUO=0xccff00;
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('gl'),antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.setSize(W,H,false);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+const pm=new THREE.PMREMGenerator(renderer);
+scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;
+scene.environmentIntensity=0.55;
+const cam=new THREE.PerspectiveCamera(30,W/H,0.5,500);
+const key=new THREE.DirectionalLight(0xffffff,2.2);key.position.set(-20,30,25);scene.add(key);
+const rim=new THREE.DirectionalLight(0xe6ffb0,2.6);rim.position.set(25,10,-30);scene.add(rim);
+scene.add(new THREE.AmbientLight(0xffffff,0.12));
+
+// materials
+const M={
+ body:new THREE.MeshPhysicalMaterial({color:0x1a1b1c,roughness:.62,metalness:.05,clearcoat:.25,clearcoatRoughness:.6}),
+ rubber:new THREE.MeshStandardMaterial({color:0x0e0e0f,roughness:.9}),
+ dark:new THREE.MeshStandardMaterial({color:0x232527,roughness:.45,metalness:.6}),
+ silver:new THREE.MeshStandardMaterial({color:0xd8d8d4,roughness:.22,metalness:1}),
+ gold:new THREE.MeshStandardMaterial({color:0xd9a441,roughness:.3,metalness:1}),
+ copper:new THREE.MeshStandardMaterial({color:0xc06a2c,roughness:.35,metalness:1}),
+ fluo:new THREE.MeshStandardMaterial({color:FLUO,emissive:FLUO,emissiveIntensity:.55,roughness:.4}),
+ pcb:new THREE.MeshStandardMaterial({color:0x10140f,roughness:.5,metalness:.2}),
+ chip:new THREE.MeshStandardMaterial({color:0x0a0a0a,roughness:.3,metalness:.4}),
+ glass:new THREE.MeshPhysicalMaterial({color:0x8fb3c9,roughness:0,metalness:0,transparent:true,opacity:.22,envMapIntensity:.35,clearcoat:1,iridescence:1,iridescenceIOR:1.6,iridescenceThicknessRange:[200,500],side:THREE.DoubleSide,depthWrite:false}),
+ sensor:new THREE.MeshPhysicalMaterial({color:0x2a1f3d,roughness:.12,metalness:.7,iridescence:1,iridescenceIOR:2.0,iridescenceThicknessRange:[250,700],clearcoat:1}),
+ steel:new THREE.MeshStandardMaterial({color:0x6a6e72,roughness:.35,metalness:.9}),
+ lcd:new THREE.MeshPhysicalMaterial({color:0x050607,roughness:.05,metalness:.2,clearcoat:1}),
+};
+
+const root=new THREE.Group();scene.add(root);
+const parts=[];
+function part(name,home,ex,delay=0){const g=new THREE.Group();g.userData={home:new THREE.Vector3(...home),ex:new THREE.Vector3(...ex),delay};root.add(g);parts.push(g);g.name=name;return g}
+const add=(g,geo,mat,p=[0,0,0],r=[0,0,0])=>{const m=new THREE.Mesh(geo,mat);m.position.set(...p);m.rotation.set(...r);g.add(m);return m};
+const lathe=(pts,seg=96)=>{const g=new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),seg);g.rotateX(Math.PI/2);return g}; // axis -> z
+function rrect(w,h,r,x=0,y=0){const s=new THREE.Shape();const a=x-w/2,b=y-h/2;s.moveTo(a+r,b);s.lineTo(a+w-r,b);s.quadraticCurveTo(a+w,b,a+w,b+r);s.lineTo(a+w,b+h-r);s.quadraticCurveTo(a+w,b+h,a+w-r,b+h);s.lineTo(a+r,b+h);s.quadraticCurveTo(a,b+h,a,b+h-r);s.lineTo(a,b+r);s.quadraticCurveTo(a,b,a+r,b);return s}
+const ext=(shape,d,bev=.12)=>new THREE.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelSegments:3,curveSegments:32});
+const MX=-0.7,MY=-0.4; // mount center (offset left: grip on the right)
+
+// lens element geometry: biconvex disc
+function lensGeo(r,t,s1,s2){const pts=[];const n=20;for(let i=0;i<=n;i++){const x=r*i/n;pts.push([x,t/2+s1*(1-(x/r)**2)])}for(let i=n;i>=0;i--){const x=r*i/n;pts.push([x,-t/2-s2*(1-(x/r)**2)])}return lathe(pts.reverse())}
+function glassPart(name,z,r,t,s1,s2,ez,d){const g=part(name,[MX,MY,z],[0,0,ez],d);add(g,lensGeo(r,t,s1,s2),M.glass);add(g,new THREE.TorusGeometry(r+.02,.09,12,96),M.dark);return g}
+
+// 1 front glass
+glassPart('front',7.75,2.75,.25,.55,.15,23.5,.0);
+// 2 barrel shell
+{const g=part('barrel',[MX,MY,4.1],[0,0,19.5],.04);
+ add(g,lathe([[3.05,-3.8],[3.25,-3.75],[3.25,-1.6],[3.32,-1.55],[3.32,2.6],[3.2,2.7],[3.2,3.5],[3.0,3.7],[2.9,3.7],[2.9,-3.8]]),M.body);
+ for(let i=0;i<14;i++)add(g,new THREE.TorusGeometry(3.34,.05,8,96),M.rubber,[0,0,-1.3+i*.27]);
+ add(g,new THREE.TorusGeometry(3.21,.035,8,96),M.fluo,[0,0,3.05]);
+ add(g,new THREE.TorusGeometry(3.26,.03,8,96),M.silver,[0,0,-3.6]);}
+// 3,4 inner glasses
+glassPart('g2',5.6,2.35,.2,.18,.45,12.2,.08);
+glassPart('g3',4.2,2.1,.18,.35,.1,11.2,.1);
+// 5 aperture
+{const g=part('aper',[MX,MY,3.0],[0,0,9.8],.12);
+ add(g,lathe([[2.0,-.18],[2.55,-.18],[2.55,.18],[2.0,.18]]),M.dark);
+ add(g,new THREE.TorusGeometry(2.56,.03,8,96),M.fluo);
+ for(let i=0;i<9;i++){const s=new THREE.Shape();s.moveTo(0,0);s.absarc(0,0,2.3,-.15,.62,false);s.lineTo(.5,.55);s.quadraticCurveTo(.2,.2,0,0);
+  const geo=new THREE.ExtrudeGeometry(s,{depth:.03,bevelEnabled:false,curveSegments:24});const m=add(g,geo,M.dark);m.rotation.z=i*Math.PI*2/9;m.position.z=-.06+i*.008;
+  const piv=new THREE.Group();g.remove(m);piv.add(m);m.position.set(.85,0,0);piv.rotation.z=i*Math.PI*2/9;piv.position.z=-.06+i*.01;g.add(piv)}}
+// 6 rear glass
+glassPart('g4',1.3,1.9,.2,.2,.3,9.0,.14);
+// 7 bayonet mount
+{const g=part('mount',[MX,MY,.18],[0,0,7.6],.16);
+ add(g,lathe([[2.35,-.15],[2.95,-.15],[2.95,.15],[2.35,.15]]),M.silver);
+ for(let i=0;i<4;i++){const m=add(g,new THREE.BoxGeometry(.9,.35,.18),M.silver,[0,0,-.22]);const pv=new THREE.Group();pv.rotation.z=i*Math.PI/2+.4;m.position.set(2.25,0,-.22);g.remove(m);pv.add(m);g.add(pv)}
+ for(let i=0;i<6;i++){const a=-Math.PI/2+.5+i*.12;add(g,new THREE.CylinderGeometry(.06,.06,.1,12),M.gold,[2.45*Math.cos(a),2.45*Math.sin(a),.16],[Math.PI/2,0,0])}}
+// 8 front shell with grip
+{const g=part('front-shell',[0,0,-.75],[0,0,4.3],.2);
+ const s=rrect(12.7,7.2,.6);const h=new THREE.Path();h.absarc(MX,MY,2.9,0,Math.PI*2,true);s.holes.push(h);
+ add(g,ext(s,1.2),M.body,[0,0,-.6]);
+ add(g,new RoundedBoxGeometry(3.1,7.0,2.6,4,.7),M.rubber,[4.75,-.05,.9]);
+ add(g,new THREE.CylinderGeometry(.22,.22,.15,24),M.fluo,[4.6,2.6,2.2],[Math.PI/2,0,0]);
+ add(g,new THREE.CylinderGeometry(.35,.35,.2,24),M.dark,[-4.3,-1.6,.75],[Math.PI/2,0,0]);}
+// 9 shutter unit
+{const g=part('shutter',[MX,MY,-1.45],[0,0,1.3],.24);
+ const s=rrect(5.6,4.8,.25);s.holes.push(rrect(3.9,2.7,.08));
+ add(g,new THREE.ExtrudeGeometry(s,{depth:.3,bevelEnabled:false}),M.steel,[0,0,-.15]);
+ for(let i=0;i<5;i++)add(g,new THREE.BoxGeometry(3.95,.42,.03),M.dark,[0,1.62+i*.06,.2+i*.02]);
+ add(g,new THREE.BoxGeometry(.7,1.4,.4),M.dark,[3.15,.4,0]);add(g,new THREE.CylinderGeometry(.18,.18,.45,20),M.copper,[3.15,-.6,0],[Math.PI/2,0,0]);
+ add(g,new THREE.BoxGeometry(.08,2.7,.05),M.fluo,[-2.05,0,.18]);}
+// 10 sensor + IBIS
+{const g=part('sensor',[MX,MY,-2.05],[0,0,-1.0],.28);
+ add(g,new RoundedBoxGeometry(6.2,5.2,.25,3,.1),M.pcb);
+ add(g,new RoundedBoxGeometry(4.4,3.2,.2,3,.08),M.gold,[0,0,.18]);
+ add(g,new THREE.BoxGeometry(3.6,2.4,.06),M.sensor,[0,0,.31]);
+ add(g,new THREE.BoxGeometry(3.7,2.5,.04),M.glass,[0,0,.37]);
+ for(const [x,y] of [[-2.6,-2.1],[2.6,-2.1],[-2.6,2.1],[2.6,2.1]]){add(g,new THREE.TorusGeometry(.38,.13,12,32),M.copper,[x,y,.15]);add(g,new THREE.TorusGeometry(.2,.04,8,24),M.fluo,[x,y,.3])}
+ for(const y of [-2.75,2.75])add(g,new THREE.BoxGeometry(5,.06,.06),M.fluo,[0,y,.05]);}
+// 11 main PCB
+{const g=part('pcb',[0,0,-2.75],[0,0,-3.4],.32);
+ const s=rrect(11.6,6.4,.3);s.holes.push(rrect(2.2,3.0,.2,4.6,-.6));
+ add(g,new THREE.ExtrudeGeometry(s,{depth:.1,bevelEnabled:false}),M.pcb);
+ add(g,new THREE.BoxGeometry(1.5,1.5,.18),M.chip,[-1.2,.6,.14]);add(g,new THREE.BoxGeometry(1.1,1.1,.04),M.silver,[-1.2,.6,.25]);
+ add(g,new THREE.BoxGeometry(1.0,.7,.12),M.chip,[1.2,1.6,.1]);add(g,new THREE.BoxGeometry(1.0,.7,.12),M.chip,[1.2,.6,.1]);
+ add(g,new THREE.BoxGeometry(.6,.4,.1),M.chip,[-3.6,-1.8,.1]);add(g,new THREE.BoxGeometry(2.2,.35,.3),M.silver,[-3.5,2.4,.18]);
+ for(let i=0;i<9;i++){const y=-2.5+i*.32;add(g,new THREE.BoxGeometry(2.6+((i*37)%5)*.4,.035,.02),M.fluo,[-3.6+((i*13)%3)*.5+1.4,y,.12])}
+ for(let i=0;i<6;i++)add(g,new THREE.BoxGeometry(.035,1.4+i*.15,.02),M.fluo,[1.9+i*.22,-1.6,.12]);
+ for(let i=0;i<12;i++)add(g,new THREE.BoxGeometry(.18,.1,.08),M.gold,[-5.2+i*.25,-2.95,.08]);}
+// 12 battery (out to the side)
+{const g=part('battery',[4.75,-.7,-1.6],[9.0,-2.5,-6.0],.36);
+ add(g,new RoundedBoxGeometry(2.0,4.6,3.0,3,.2),M.dark);
+ add(g,new THREE.BoxGeometry(2.04,.5,3.04),M.fluo,[0,1.2,0]);
+ for(let i=0;i<4;i++)add(g,new THREE.BoxGeometry(.25,.1,.4),M.gold,[-.5+i*.33,2.31,-.6]);}
+// 13 SD card
+{const g=part('sd',[6.2,.4,-2.1],[11.5,1.5,-4.0],.4);
+ const s=new THREE.Shape();s.moveTo(-1.2,-1.6);s.lineTo(1.2,-1.6);s.lineTo(1.2,1.6);s.lineTo(-.8,1.6);s.lineTo(-1.2,1.2);s.lineTo(-1.2,-1.6);
+ add(g,new THREE.ExtrudeGeometry(s,{depth:.2,bevelEnabled:false}),M.chip,[0,0,-.1],[0,Math.PI/2,0]);
+ add(g,new THREE.BoxGeometry(.03,1.2,2.0),M.fluo,[.12,-.2,0]);}
+// 14 top plate + EVF
+{const g=part('top',[0,0,-2.2],[0,7.5,-2.5],.3);
+ const s=new THREE.Shape();s.moveTo(-6.35,3.0);s.lineTo(6.35,3.0);s.lineTo(6.35,3.95);s.lineTo(1.9,3.95);s.lineTo(1.2,5.9);s.lineTo(-2.9,5.9);s.lineTo(-3.6,3.95);s.lineTo(-6.35,3.95);s.lineTo(-6.35,3.0);
+ add(g,ext(s,4.0,.15),M.body,[0,0,-2.0]);
+ add(g,new THREE.CylinderGeometry(.75,.75,.45,48),M.dark,[4.2,4.3,-1.3]);add(g,new THREE.CylinderGeometry(.62,.62,.5,48),M.dark,[2.6,4.3,-1.2]);
+ add(g,new THREE.TorusGeometry(.75,.025,8,48),M.fluo,[4.2,4.52,-1.3],[Math.PI/2,0,0]);
+ add(g,new THREE.CylinderGeometry(.42,.42,.3,40),M.silver,[4.75,4.2,2.6]);
+ add(g,new THREE.CylinderGeometry(.62,.62,.35,40),M.dark,[4.75,4.0,2.6]);
+ add(g,new RoundedBoxGeometry(3.4,1.6,1.0,3,.3),M.rubber,[-.85,4.9,-2.6]);
+ add(g,new THREE.BoxGeometry(2.4,1.0,.05),M.lcd,[-.85,4.9,-3.12]);}
+// 15 rear shell
+{const g=part('rear',[0,0,-3.75],[0,0,-8.0],.38);
+ add(g,ext(rrect(12.7,7.2,.6),.9),M.body,[0,0,-.45]);
+ for(const [x,y] of [[5.0,1.6],[5.0,.2],[5.4,-1.2],[4.6,2.6]])add(g,new THREE.CylinderGeometry(.28,.28,.18,24),M.dark,[x,y,-.65],[Math.PI/2,0,0]);
+ add(g,new THREE.TorusGeometry(.7,.16,12,48),M.dark,[5.0,-1.6,-.62]);}
+// 16 rear LCD
+{const g=part('lcd',[-.9,-.6,-4.45],[0,0,-10.5],.42);
+ add(g,new RoundedBoxGeometry(7.6,5.0,.35,3,.12),M.dark);add(g,new THREE.BoxGeometry(7.0,4.4,.04),M.lcd,[0,0,-.18]);
+ add(g,new THREE.BoxGeometry(7.0,.04,.05),M.fluo,[0,-2.32,-.18]);}
+
+for(const p of parts){p.position.copy(p.userData.home)}
+const P=n=>parts.find(p=>p.name===n);
+
+// model orientation: lens axis tilts up-right so the exploded stack runs diagonally across the 9:16 frame
+root.rotation.set(-0.52,-0.62,0.0);
+
+// ---------- helpers
+const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const sm=x=>{x=cl(x);return x*x*(3-2*x)};
+const eo=x=>{x=cl(x);return 1-Math.pow(1-x,3)};
+const back=x=>{x=cl(x);const c=1.5;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const lerp=(a,b,t)=>a+(b-a)*t;
+const v3=(...a)=>new THREE.Vector3(...a);
+
+// explode amount per part
+function explodeAmt(t,d){
+  const out=back((t-0.55-d*1.6)/0.95);           // explode 0.55 → ~2.2s
+  const inn=eo((t-10.7-(0.42-d)*1.8)/0.75);        // reassemble 10.7 → ~12.2s, outermost last in reverse
+  return out*(1-inn);
+}
+function worldOf(name,t){const p=P(name);const e=explodeAmt(t,p.userData.delay);const v=p.userData.home.clone().addScaledVector(p.userData.ex,e);return root.localToWorld(v)}
+
+// camera keys: [t, target(fn), radius, az(deg), el(deg)]
+const C_ASM=()=>root.localToWorld(v3(0,.8,1.0));
+const C_ALL=t=>{const a=worldOf('front',t),b=worldOf('lcd',t);return a.add(b).multiplyScalar(.5)};
+const keys=[
+ [0.0, C_ASM, 62, -26, 6, -.11],
+ [0.55,C_ASM, 58, -22, 7, -.11],
+ [2.1, C_ALL, 150, 62, 10, -.02],
+ [2.7, t=>worldOf('g2',t).lerp(worldOf('front',t),.35), 44, 30, 10, .085],
+ [4.2, t=>worldOf('g2',t).lerp(worldOf('front',t),.35), 40, 36, 12, .085],
+ [4.45,t=>worldOf('aper',t), 30, 30, 10, .085],
+ [5.85,t=>worldOf('aper',t), 27, 38, 12, .085],
+ [6.1, t=>worldOf('shutter',t), 40, -38, 4, .085],
+ [7.55,t=>worldOf('shutter',t), 35, -30, 8, .085],
+ [7.8, t=>worldOf('sensor',t), 30, 28, 6, .085],
+ [9.15,t=>worldOf('sensor',t), 26, 36, 8, .085],
+ [9.4, t=>worldOf('sensor',t), 32, 58, 14, .085],
+ [10.7,t=>worldOf('sensor',t), 36, 66, 16, .085],
+ [11.6,C_ALL, 140, 58, 10, -.02],
+ [12.4,C_ASM, 76, -30, 8, -.035],
+ [15.0,C_ASM, 72, -26, 6, -.035],
+];
+function camAt(t){
+  let i=0;while(i<keys.length-2&&t>keys[i+1][0])i++;
+  const a=keys[i],b=keys[i+1];const u=sm((t-a[0])/(b[0]-a[0]));
+  const tgt=a[1](t).lerp(b[1](t),u);
+  const fo=lerp(a[5],b[5],u),r=lerp(a[2],b[2],u),az=lerp(a[3],b[3],u)*Math.PI/180,el=lerp(a[4],b[4],u)*Math.PI/180;
+  cam.position.set(tgt.x+r*Math.sin(az)*Math.cos(el),tgt.y+r*Math.sin(el),tgt.z+r*Math.cos(az)*Math.cos(el));
+  cam.lookAt(tgt);
+  cam.updateMatrixWorld();const up=new THREE.Vector3(0,1,0).applyQuaternion(cam.quaternion);cam.position.addScaledVector(up,-r*fo);
+}
+
+// ---------- text
+const $=id=>document.getElementById(id);
+function words(el,html){el.innerHTML=html.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');}
+words($('hook'),'Quanti pezzi ci sono <span class="fl">qui dentro?</span>');
+$('hook').innerHTML='<span class="w">Quanti</span> <span class="w">pezzi</span><br><span class="w">ci</span> <span class="w">sono</span><br><span class="w fl">qui</span> <span class="w fl">dentro?</span>';
+const LABS=[
+ {t:2.6,e:4.25,tag:'01 · OTTICA',big:'Vetro su *vetro.*',sub:'Ogni lente piega la luce un po’.',part:'g2'},
+ {t:4.4,e:5.95,tag:'02 · DIAFRAMMA',big:'Nove *lamelle.*',sub:'Decidono quanta luce passa.',part:'aper'},
+ {t:6.05,e:7.65,tag:'03 · OTTURATORE',big:'*1/8000*',sub:'Di secondo: lo scatto più rapido.',part:'shutter',num:1},
+ {t:7.75,e:9.3,tag:'04 · SENSORE',big:'36×24 *mm*',sub:'Full frame: la foto nasce qui.',part:'sensor',num:1},
+ {t:9.4,e:10.75,tag:'05 · STABILIZZATORE',big:'*5* assi.',sub:'Il sensore si muove contro il mosso.',part:'sensor'},
+];
+LABS.forEach((L,i)=>{const el=$('L'+i);el.innerHTML=`<div class="tag w">${L.tag}</div><div class="big ${L.num?'num':''}">${L.big.split(' ').map(w=>w.startsWith('*')?`<span class="w fl">${w.replaceAll('*','')}</span>`:`<span class="w">${w}</span>`).join(' ')}</div><div class="sub w">${L.sub}</div>`});
+$('end').querySelector('.q').innerHTML='<span class="w">Quanti</span> <span class="w">pezzi</span><br><span class="w">hai</span> <span class="w">contato?</span>';
+$('end').querySelector('.a').innerHTML='<span class="w">Scrivi</span> <span class="w">il</span> <span class="w">numero</span> <span class="w">↓</span>';
+$('end').querySelector('.s').innerHTML='<span class="w">Mandalo</span> <span class="w">a</span> <span class="w">chi</span> <span class="w">ha</span> <span class="w">una</span> <span class="w">mirrorless.</span>';
+
+function focusWords(el,t0,t,step=.06,dur=.32,outT=null){
+  const ws=el.querySelectorAll('.w');let vis=false;
+  ws.forEach((w,i)=>{const u=cl((t-t0-i*step)/dur);let o=u,b=(1-eo(u))*14,s=lerp(1.12,1,eo(u)),y=(1-eo(u))*10;
+    if(outT!==null){const v=cl((t-outT)/.22);o*=1-v;b+=v*10;y-=v*14}
+    w.style.opacity=o;w.style.filter=`blur(${b.toFixed(2)}px)`;w.style.transform=`translateY(${y}px) scale(${s})`;if(o>0)vis=true});
+  el.style.visibility=vis?'visible':'hidden';
+}
+
+// ---------- grain
+const fx=$('fx').getContext('2d');const tiles=[];
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+for(let k=0;k<6;k++){const c=document.createElement('canvas');c.width=540;c.height=960;const x=c.getContext('2d');const id=x.createImageData(540,960);for(let i=0;i<id.data.length;i+=4){const v=rnd()*255;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255}x.putImageData(id,0,0);tiles.push(c)}
+
+const svg=$('lines');
+function corner(x,y,dx,dy,col,len=56){return `<path d="M${x+dx*len} ${y} L${x} ${y} L${x} ${y+dy*len}" stroke="${col}" stroke-width="4" fill="none"/>`}
+function project(v){const p=v.clone().project(cam);return [(p.x*.5+.5)*W,(-p.y*.5+.5)*H]}
+
+function render(t){
+  // per-part explode
+  for(const p of parts){const e=explodeAmt(t,p.userData.delay);p.position.copy(p.userData.home).addScaledVector(p.userData.ex,e)}
+  // aperture blades breathe during its label
+  const ap=P('aper');const k=sm((t-4.5)/.6)*(1-sm((t-5.6)/.4));ap.children.forEach((c,i)=>{if(c.isGroup)c.rotation.z=i*Math.PI*2/9+k*.42});
+  // shutter curtains drop during its label
+  const sh=P('shutter');const sc=sm((t-6.3)/.12)*(1-sm((t-6.55)/.12));sh.children.forEach((c,i)=>{if(i>=1&&i<=5)c.position.y=lerp(1.62+(i-1)*.06,0,sc)-0;});
+  // IBIS: sensor wiggles during its label
+  const se=P('sensor');const w=sm((t-9.5)/.3)*(1-sm((t-10.5)/.3));se.rotation.set(Math.sin(t*9)*.05*w,Math.sin(t*7+1)*.05*w,Math.sin(t*5)*.06*w);se.position.x+=Math.sin(t*11)*.12*w;se.position.y+=Math.cos(t*13)*.1*w;
+  // whole model slow spin at start/end
+  root.rotation.y=-0.62+Math.sin(t*.35)*.05;
+  camAt(t);
+  // punch-in shake on hits
+  const hit=Math.exp(-((t-0.55)**2)/.004)*.5+Math.exp(-((t-6.35)**2)/.002)*.35+Math.exp(-((t-12.25)**2)/.003)*.45;
+  cam.fov=30-hit*1.6;cam.updateProjectionMatrix();
+  renderer.render(scene,cam);
+
+  // UI
+  focusWords($('hook'),0.02,t,.07,.28,2.05);
+  const chipIn=cl((t-2.15)/.25),chipOut=cl((t-12.3)/.2);$('chip').style.opacity=chipIn*(1-chipOut);$('chip').style.transform=`translateY(${(1-eo(chipIn))*-20}px)`;
+  let lines='';
+  LABS.forEach((L,i)=>{const el=$('L'+i);focusWords(el,L.t,t,.06,.3,L.e-.22);
+    const a=cl((t-L.t)/.35)*(1-cl((t-L.e+.22)/.2));
+    if(a>0){const [px,py]=project(worldOf(L.part,t));const lx=110,ly=1150;const mx=lerp(lx,px,eo(a));const my=lerp(ly,py,eo(a));
+      lines+=`<line x1="${lx}" y1="${ly}" x2="${mx}" y2="${my}" stroke="#CCFF00" stroke-width="3" opacity="${a}"/><circle cx="${mx}" cy="${my}" r="${10*a}" fill="none" stroke="#CCFF00" stroke-width="3"/><circle cx="${mx}" cy="${my}" r="4" fill="#CCFF00" opacity="${a}"/><circle cx="${lx}" cy="${ly}" r="5" fill="#CCFF00" opacity="${a}"/>`}});
+  // viewfinder corners
+  const cc='rgba(244,244,238,.55)';lines+=corner(60,220,1,1,cc)+corner(1020,220,-1,1,cc)+corner(60,1650,1,-1,cc)+corner(1020,1650,-1,-1,cc);
+  // AF box locks at start
+  const af=cl((t-.05)/.35)*(1-cl((t-.55)/.15));if(af>0){const [cx,cy]=project(C_ASM());const s=lerp(260,170,eo(af));const col=af>.85?'#CCFF00':'#F4F4EE';lines+=corner(cx-s,cy-s,1,1,col,30)+corner(cx+s,cy-s,-1,1,col,30)+corner(cx-s,cy+s,1,-1,col,30)+corner(cx+s,cy+s,-1,-1,col,30)}
+  svg.innerHTML=lines;
+  // end card
+  const eT=12.45;focusWords($('end').querySelector('.q'),eT,t,.07,.3);focusWords($('end').querySelector('.a'),eT+.45,t,.07,.28);focusWords($('end').querySelector('.s'),eT+.95,t,.05,.28);
+  $('end').style.visibility=t>eT?'visible':'hidden';
+  const ul=cl((t-eT-.8)/.45);$('ul').style.width=(eo(ul)*600)+'px';
+  const lg=cl((t-13.4)/.4);$('logo').style.opacity=lg;$('logo').style.filter=`blur(${(1-eo(lg))*12}px)`;
+  // viewfinder data
+  const f=Math.floor(t*30);$('tc').textContent=`● REC  00:00:${String(Math.floor(t)).padStart(2,'0')}:${String(f%30).padStart(2,'0')}`;
+  const ss=['1/125','1/125','1/250','1/250','1/500','1/1000','1/8000','1/8000','1/8000','1/250','1/250','1/250','1/125','1/125','1/125','1/125'][Math.min(15,Math.floor(t))];
+  $('ex').textContent=`${ss}   F${t<4.4?'2.8':t<6?'8':'2.8'}   ISO 100   PEZZI ${'?'}`;
+  // grain
+  fx.clearRect(0,0,W,H);fx.globalAlpha=.11;fx.globalCompositeOperation='source-over';fx.drawImage(tiles[f%6],0,0,W,H);
+  fx.globalAlpha=.05;fx.fillStyle='#000';for(let y=(f*2)%6;y<H;y+=6)fx.fillRect(0,y,W,2);fx.globalAlpha=1;
+}
+window.render=render;window.DUR=15;
+// preview playback when opened normally
+const q=new URLSearchParams(location.search);
+if(q.has('t')){render(+q.get('t'))}else if(!q.has('rec')){let t0=performance.now();const loop=()=>{const t=((performance.now()-t0)/1000)%15;render(t);requestAnimationFrame(loop)};document.fonts.ready.then(loop)}
+if(q.has('zones'))$('zones').style.display='block';
+window.ready=document.fonts.ready.then(()=>true);
+</script></body></html>
